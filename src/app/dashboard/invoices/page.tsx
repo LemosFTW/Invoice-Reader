@@ -19,22 +19,8 @@ export default function Dashboard() {
   if (status === "loading") return <p>Loading...</p>;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center min-h-screen py-2">
-      <h1 className="text-4xl font-bold p-3 mx-10">Wellcome {session?.user?.name}  </h1>
-
-    <br />
-    <br />
-
-
-      <SideBar setter={setShowSidebar} show={showSidebar} />
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => {
-          router.push("/api/auth/signout");
-        }}
-      >
-        Sign Out
-      </button>
+    <div className="">
+        invoices
     </div>
   );
 }
