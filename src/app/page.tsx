@@ -1,11 +1,18 @@
-import Image from "next/image";
+'use client';
+import { useSession } from "next-auth/react";
 import { GoogleSignInButton } from "@/components/authButtons";
-import { redirect } from "next/navigation";
-import { getCsrfToken } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default async function SignInPage() {
-  // const session = await getServerSession(authConfig);
-  // if (session) return redirect("/");
+export default function SignInPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (session) {
+      router.push("/dashboard");
+    }
+  }, [session, router]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center min-h-screen py-2">
