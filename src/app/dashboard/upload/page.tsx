@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation"; // Import from next/navigation
 import { useEffect, useState } from "react";
 import SideBar from "@/components/sideBar";
+import axios from "axios";
 
 export default function upload() {
   const [file, setFile] = useState<File>();
@@ -28,15 +29,15 @@ export default function upload() {
       const data = new FormData();
       data.set("file", file);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: data,
-      });
-      if (!res.ok) throw new Error(await res.text());
-    } catch (e: any) {
+        await axios.post("http://localhost:8000/upload", data)
+        .then((res) => { console.log(res.status); console.log(res.data);})
+        .catch((e) => { console.error(e); });
+
+        
+      }catch (e) {
       console.error(e);
-    }
-  };
+      }
+    };
 
   return (
     <>

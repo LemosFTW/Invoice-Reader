@@ -1,8 +1,9 @@
-'use client';
+"use client";
 import { useSession } from "next-auth/react";
 import { GoogleSignInButton } from "@/components/authButtons";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function SignInPage() {
   const { data: session } = useSession();
@@ -10,6 +11,20 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (session) {
+      let data = {name: "", email: ""};
+
+      if (session.user) {
+        data.name = session.user.name as string;
+        data.email = session.user.email as string;
+      }
+
+      axios.post("http://localhost:8000/users", {
+        data,
+      }).then((res) => { console.log(res.status); console.log(res.data); })
+        .catch((e) => { console.error(e); })
+      
+      
+      ;
       router.push("/dashboard");
     }
   }, [session, router]);
