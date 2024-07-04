@@ -1,54 +1,26 @@
 "use client";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Tesseract from "tesseract.js";
-import {OpenAI,AzureOpenAI,ClientOptions} from "openai";
 
 export default function Upload() {
   const [file, setFile] = useState<File>();
   const { data: session, status } = useSession();
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [lines, setLines] = useState([]); // [ {text: "line1"}, {text: "line2"}]
-  const [content, setContent] = useState('');
-  const [summary, setSummary] = useState('');
+  const [content, setContent] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
   const readImageContent = async (image: any) => {
-    let data = await Tesseract.recognize(image, 'por');
-    setLines(data.lines as any);
-    // setContent(data.text);
-    var contentParse  = data.lines.map((line: any) => line.text).join('\n');
-    // console.log(contentParse)
+    let data = await Tesseract.recognize(image, "por");
+    const contentParse = data.lines.map((line: any) => line.text).join("\n");
     setContent(contentParse);
-
-    // summarizeContent(data.text);
-  }
-
-  //Summarize the content using OpenAI
-  const summarizeContent = async (text: string) => {
-    try {
-        const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY , dangerouslyAllowBrowser: true});
-  
-        const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: "Você é um assistente que ajuda a resumir textos." },
-            { role: "user", content: `Faça um resumo detalhado do seguinte texto em português e divida em tópicos principais: ${text}` }
-          ],
-          max_tokens: 150,
-        });
-
-      if (response.choices && response.choices.length > 0) 
-        response.choices[0].message.content != null ? setSummary(response.choices[0].message.content) : setSummary('No summary found');
-      
-    } catch (error) {
-      console.error("Error summarizing content:", error);
-    }
+    setEditedContent(contentParse);
   };
 
   useEffect(() => {
@@ -56,6 +28,13 @@ export default function Upload() {
       router.push("/");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [editedContent]);
 
   if (status === "loading") return <p>Loading...</p>;
 
@@ -72,81 +51,130 @@ export default function Upload() {
         .post("http://localhost:8000/upload", data)
         .then((res) => {
           let url = URL.createObjectURL(file);
-          if (res.status === 201)
-            readImageContent(url);
+          if (res.status === 201) readImageContent(url);
         })
         .catch((e) => {
           console.error(e);
         });
 
+      const updateData = {
+        fileName: file.name,
+        userEmail: session?.user?.email as string,
+        content: editedContent,
+      };
 
-        var updateData = {
-          fileName: file.name,
-          userEmail: session?.user?.email as string,
-          //content: summary
-          content: content
-        }
-        await axios.patch('http://localhost:8000/upload', updateData )
+      await axios
+        .patch("http://localhost:8000/upload", updateData)
         .then((res) => {
-          if (res.status === 200)
-            toast.success("File updated successfully");
-
+          if (res.status === 200) toast.success("File uploaded successfully");
         })
         .catch((e) => {
           console.error(e);
         });
-
-
-
-
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditedContent(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    setIsEditing(false);
+
+    const updateData = {
+      fileName: file?.name as string,
+      userEmail: session?.user?.email as string,
+      content: editedContent,
+    };
+
+    try {
+      const res = await axios.patch("http://localhost:8000/upload", updateData);
+      if (res.status === 200) toast.success("File updated successfully");
+    } catch (e) {
+      console.error(e);
+    }
+
+    setContent(editedContent);
+    setIsEditing(false);
+
+    console.log(content);
+  };
+
   return (
     <>
-      <div>
-        <h1 className=" text-4xl font-bold p-5 mx-12 text-center">
-          Upload a new Invoice
-        </h1>
-      </div>
-
-      <form
-        onSubmit={onSubmit}
-        className="h-screen flex items-center justify-center "
-      >
-        <input
-          type="file"
-          name="file"
-          onChange={(e) => setFile(e.target.files?.[0])}
-          className=" border-2 border-gray-300 border-dashed rounded-md p-4 w-96 "
-          draggable="true"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-          }}
-        />
-
-        <input
-          type="submit"
-          value="Upload"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold m-12 py-2 px-4 rounded"
-        />
-      </form>
-      <div>
-        <div className="flex gap-x-[30px] mt-20">
-          <div>
-            <h2>Summary</h2>
-            {summary && <p>{summary}</p>}
-            {content && <p>{content}</p>}
+      <div className="min-h-screen grid place-items-center bg-gray-900">
+        <form
+          onSubmit={onSubmit}
+          className="w-full max-w-xl bg-gray-800 p-8 rounded-lg shadow-md"
+        >
+          <h1 className="text-4xl font-bold mb-8 text-center text-white">
+            Upload a new Invoice
+          </h1>
+          <div className="mb-6">
+            <input
+              type="file"
+              name="file"
+              onChange={(e) => setFile(e.target.files?.[0])}
+              className="border-2 border-gray-300 border-dashed rounded-md p-4 w-full text-white bg-gray-700"
+              draggable="true"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+              }}
+            />
           </div>
-          {/* <h2>Content</h2>
-            {lines.map((line, index) => (
-              <p key={index}>{line}</p>
-            ))} */}
-        </div>
+          <div className="flex justify-center mb-6">
+            <input
+              type="submit"
+              value="Upload"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            />
+          </div>
+          <div className="bg-gray-700 p-4 rounded-lg">
+            <h2 className="text-xl font-bold text-white mt-4">Content</h2>
+
+            {isEditing ? (
+              <textarea
+                ref={textareaRef}
+                value={editedContent}
+                onChange={handleEditChange}
+                className="w-full p-3 mt-2 text-gray-200 bg-gray-800 rounded-lg resize-none focus:outline-none"
+                rows={10}
+                style={{ overflow: "hidden", backgroundColor: "inherit" }}
+              ></textarea>
+            ) : (
+              <p className="text-sm text-gray-200 mt-2 whitespace-pre-wrap">
+                {content}
+              </p>
+            )}
+
+            <div className="flex justify-end mt-4">
+              {isEditing ? (
+                <button
+                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                  onClick={() => {handleEditSubmit();}}
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+        </form>
       </div>
+      <ToastContainer />
     </>
   );
 }
