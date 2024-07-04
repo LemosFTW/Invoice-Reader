@@ -42,9 +42,9 @@ export default function Dashboard() {
       });
   };
 
-  const deleteInvoice = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    let id = e.currentTarget.id;
+  const deleteInvoice = async (id: number) => {
     let userEmail = session?.user?.email as string;
+    console.log(id)
     await axios
       .delete(`http://localhost:8000/invoices/${id}`, {
         data: { email: userEmail },
@@ -62,42 +62,47 @@ export default function Dashboard() {
 
   const editInvoice = async (e: React.MouseEvent<HTMLButtonElement>) => {};
 
-  return (
+  return(
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Invoices Dashboard</h1>
+      
+      <h1 className="text-2xl font-bold mb-4">Invoices Dashboard</h1>
       {/* print invoices: invoices.filename , invoices.extractedText, invoices.id */}
-      {invoices.map((invoice) => (
-        <div
-          key={invoice.id}
-          className="flex flex-row justify-between items-center p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-slate-400 hover:bg-slate-500 transition duration-300 ease-in-out"
-        >
-          <div className="flex flex-row items-center">
-            <div className="ml-4">
-              <span className="text-lg font-semibold text-gray-700">
-                ID: {invoice.id}
-              </span>
-              <p className="text-lg font-semibold text-gray-900">
-                {invoice.filename}
-              </p>
-              <p className="text-sm text-gray-600">{invoice.extractedText}</p>
+      {Array.isArray(invoices) && invoices.length > 0 ? (
+        invoices.map((invoice) => (
+          <div
+            key={invoice.id}
+            className="flex flex-row justify-between items-center p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-white"
+          >
+            <div className="flex flex-row items-center">
+              <div className="ml-4">
+                <span className="text-lg font-semibold text-gray-700">
+                  ID: {invoice.id}
+                </span>
+                <p className="text-lg font-semibold text-gray-900">
+                  {invoice.filename}
+                </p>
+                <p className="text-sm text-gray-600">{invoice.extractedText}</p>
+              </div>
+            </div>
+            <div className="flex flex-row space-x-2">
+              <button
+                className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
+                onClick={(e) => editInvoice(e)}
+              >
+                Edit
+              </button>
+              <button
+                className="text-white bg-red-500 border border-red-500 p-2 rounded-md hover:bg-red-600"
+                onClick={() => deleteInvoice(invoice.id)}
+              >
+                Delete
+              </button>
             </div>
           </div>
-          <div className="flex flex-row space-x-2">
-            <button
-              className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
-              onClick={(e) => editInvoice(e)}
-            >
-              Edit
-            </button>
-            <button
-              className="text-white bg-red-500 border border-red-500 p-2 rounded-md hover:bg-red-600"
-              onClick={(e) => deleteInvoice(e)}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
+        ))
+      ) : (
+        <p>No invoices found.</p>
+      )}
     </div>
   );
 }
