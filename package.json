@@ -10,12 +10,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@huggingface/inference": "^2.7.0",
     "@prisma/client": "^5.16.1",
     "axios": "^1.7.2",
+    "cohere-ai": "^7.10.6",
     "next": "14.2.4",
     "next-auth": "^4.24.7",
+    "openai": "^4.52.3",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-toastify": "^10.0.5",
+    "tesseract.js": "^1.0.19",
+    "tesseract.ts": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
