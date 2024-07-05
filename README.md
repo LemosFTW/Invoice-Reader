@@ -13,6 +13,18 @@ pnpm dev
 # or
 bun dev
 ```
+##Setup Your Enviremonet:
+configurate env file with:
+```bash
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+NEXTAUTH_URL = ex: http://localhost:3000
+```
+
+##After running the Front-End -> Run the BackEnd
+https://github.com/LemosFTW/Backend-InvoiceReader/tree/master
+
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
