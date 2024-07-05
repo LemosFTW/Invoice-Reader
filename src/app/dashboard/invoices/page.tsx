@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import SideBar from "@/components/sideBar";
 import createAxiosInstance from "@/../lib/axiosInstance";
+import {SignOut} from "@/components/SignOut";
+
 
 interface Invoice {
   id: number;
@@ -15,8 +17,6 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   var API = createAxiosInstance(session?.accessToken as string)
 
-
-
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [editInvoiceSelectedData, setEditInvoiceSelectedData] =
     useState<Invoice | null>(null);
@@ -24,15 +24,12 @@ export default function Dashboard() {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-
-
   useEffect(() => {
     if (status !== "loading" && !session) router.push("/");
   }, [session, status, router]);
 
   useEffect(() => {
     fetchInvoices();
-    if (session) console.log(session.user.name);
   }, []);
 
   useEffect(() => {
@@ -112,70 +109,74 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="flex h-screen">
-        <SideBar show={showSidebar} setter={setShowSidebar} />
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">Invoices Dashboard</h1>
-          {Array.isArray(invoices) && invoices.length > 0 ? (
-            invoices.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="flex flex-col justify-between items-start p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-white"
-              >
-                <div className="flex flex-row items-center justify-between w-full">
-                  <div className="flex flex-col w-full">
-                    <span className="text-lg font-semibold text-gray-700">
-                      ID: {invoice.id}
-                    </span>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {invoice.filename}
+    <div className="flex h-screen relative">
+      <SideBar show={showSidebar} setter={setShowSidebar} />
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Invoices Dashboard</h1>
+        {Array.isArray(invoices) && invoices.length > 0 ? (
+          invoices.map((invoice) => (
+            <div
+              key={invoice.id}
+              className="flex flex-col justify-between items-start p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-white"
+            >
+              <div className="flex flex-row items-center justify-between w-full">
+                <div className="flex flex-col w-full">
+                  <span className="text-lg font-semibold text-gray-700">
+                    ID: {invoice.id}
+                  </span>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {invoice.filename}
+                  </p>
+                  {editInvoiceSelectedData?.id === invoice.id ? (
+                    <textarea
+                      ref={textareaRef}
+                      value={editInvoiceSelectedData.extractedText}
+                      onChange={handleEditChange}
+                      className="w-full p-3 border-none mt-2 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={5}
+                      style={{ overflow: "hidden" }}
+                    ></textarea>
+                  ) : (
+                    <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">
+                      {invoice.extractedText}
                     </p>
-                    {editInvoiceSelectedData?.id === invoice.id ? (
-                      <textarea
-                        ref={textareaRef}
-                        value={editInvoiceSelectedData.extractedText}
-                        onChange={handleEditChange}
-                        className="w-full p-3 border-none mt-2 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={5}
-                        style={{ overflow: "hidden" }}
-                      ></textarea>
-                    ) : (
-                      <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">
-                        {invoice.extractedText}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-row space-x-2 ml-4">
-                    {editInvoiceSelectedData?.id === invoice.id ? (
-                      <button
-                        className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
-                        onClick={handleEditSubmit}
-                      >
-                        Save
-                      </button>
-                    ) : (
-                      <button
-                        className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
-                        onClick={() => editInvoice(invoice)}
-                      >
-                        Edit
-                      </button>
-                    )}
+                  )}
+                </div>
+                <div className="flex flex-row space-x-2 ml-4">
+                  {editInvoiceSelectedData?.id === invoice.id ? (
                     <button
-                      className="text-white bg-red-500 border border-red-500 p-2 rounded-md hover:bg-red-600"
-                      onClick={() => deleteInvoice(invoice.id)}
+                      className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
+                      onClick={handleEditSubmit}
                     >
-                      Delete
+                      Save
                     </button>
-                  </div>
+                  ) : (
+                    <button
+                      className="text-white bg-blue-500 border border-blue-500 p-2 rounded-md hover:bg-blue-600"
+                      onClick={() => editInvoice(invoice)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    className="text-white bg-red-500 border border-red-500 p-2 rounded-md hover:bg-red-600"
+                    onClick={() => deleteInvoice(invoice.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <p>No invoices found.</p>
-          )}
-        </div>
+            </div>
+          ))
+        ) : (
+          <p>No invoices found.</p>
+        )}
       </div>
-    </>
+      <div className="absolute top-4 right-4">
+        <SignOut />
+      </div>
+    </div>
+  </>
+  
   );
 }

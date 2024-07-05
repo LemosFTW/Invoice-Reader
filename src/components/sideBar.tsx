@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import classNames from "classnames";
-import { Sidebar } from "flowbite-react";
 
 
 interface SideBarProps {
