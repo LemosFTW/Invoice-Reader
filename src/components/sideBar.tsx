@@ -1,34 +1,58 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import classNames from "classnames";
+import { Sidebar } from "flowbite-react";
 
-export default function SideBar({ show, setter }: { show: any; setter: any }) {
+
+interface SideBarProps {
+  show: boolean;
+  setter: (value: boolean) => void;
+}
+
+const menuItems = [
+  {
+    href: '/',
+    title: 'Homepage',
+  },
+  {
+    href: '/dashboard/upload',
+    title: 'Upload ',
+  },
+  {
+    href: '/dashboard/invoices',
+    title: 'Invoice ',
+  },
+];
+
+const SideBar: React.FC<SideBarProps> = ({ show, setter }) => {
   const router = useRouter();
   const [active, setActive] = useState("");
 
   return (
-    <div>
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <button onClick={() => setter(false)} className="text-2xl">
-          <i className="fas fa-times"></i>
-        </button>
-      </div>
-      <div className="p-4">
-        <ul>
-          <li className={ ' font-bold p-2 margin-md hover:bg-sky-500 hover:cursor-pointer hover:text-black hover:rounded'}>
-          
-            <Link legacyBehavior href="/dashboard/upload">
-              <a>Upload a new Invoice</a>
-            </Link>
-          </li>
-          <li className={ ' font-bold p-2 margin-md hover:bg-sky-500 hover:cursor-pointer hover:text-black hover:rounded'}>
-            <Link legacyBehavior href="/dashboard/invoices">
-              <a>View Invoices</a>
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <aside className='flex items-center justify-between p-4 border-b border-gray-700'>
+  <nav>
+    <ul>
+      {menuItems.map(({ href, title }) => (
+        <li className='m-2' key={title}>
+          <Link legacyBehavior href={href}>
+            <a
+              className={`font-bold p-2 margin-md hover:bg-sky-500 hover:cursor-pointer hover:text-black hover:rounded`}
+              onClick={() => {
+                setActive(title);
+                setter(false);
+              }}
+            >
+              {title}
+            </a>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</aside>
   );
-}
+};
+
+export default SideBar;

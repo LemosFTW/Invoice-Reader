@@ -3,11 +3,16 @@ import { useSession } from "next-auth/react";
 import { GoogleSignInButton } from "@/components/authButtons";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+
+
+import createAxiosInstance from "@/../lib/axiosInstance";
 
 export default function SignInPage() {
   const { data: session } = useSession();
   const router = useRouter();
+
+  var API = createAxiosInstance(session?.accessToken as string);
+  
 
   useEffect(() => {
     if (session) {
@@ -18,13 +23,12 @@ export default function SignInPage() {
         data.email = session.user.email as string;
       }
 
-      axios.post("http://localhost:8000/users", {
+      API.post("/users", {
         data,
       }).then((res) => { console.log(res.status); console.log(res.data); })
         .catch((e) => { console.error(e); })
       
       
-      ;
       router.push("/dashboard");
     }
   }, [session, router]);

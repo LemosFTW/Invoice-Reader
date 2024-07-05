@@ -2,14 +2,25 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Tesseract from "tesseract.js";
+import SideBar from "@/components/sideBar";
+import createAxiosInstance from "@/../lib/axiosInstance";
 
 export default function Upload() {
   const [file, setFile] = useState<File>();
+  const [showSidebar, setShowSidebar] = useState(false);
+  
   const { data: session, status } = useSession();
+  
+    var API = createAxiosInstance(session?.accessToken as string);
+ 
+
+
+
+
+
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
@@ -22,7 +33,7 @@ export default function Upload() {
     setContent(contentParse);
     setEditedContent(contentParse);
   };
-
+  
   useEffect(() => {
     if (status !== "loading" && !session) {
       router.push("/");
@@ -47,8 +58,8 @@ export default function Upload() {
       data.set("file", file);
       data.set("userEmail", session?.user?.email as string);
 
-      await axios
-        .post("http://localhost:8000/upload", data)
+      await API
+        .post("/upload", data)
         .then((res) => {
           let url = URL.createObjectURL(file);
           if (res.status === 201) readImageContent(url);
@@ -63,8 +74,8 @@ export default function Upload() {
         content: editedContent,
       };
 
-      await axios
-        .patch("http://localhost:8000/upload", updateData)
+      await API
+        .patch("/upload", updateData)
         .then((res) => {
           if (res.status === 200) toast.success("File uploaded successfully");
         })
@@ -94,7 +105,7 @@ export default function Upload() {
     };
 
     try {
-      const res = await axios.patch("http://localhost:8000/upload", updateData);
+      const res = await API.patch("/upload", updateData);
       if (res.status === 200) toast.success("File updated successfully");
     } catch (e) {
       console.error(e);
@@ -102,79 +113,85 @@ export default function Upload() {
 
     setContent(editedContent);
     setIsEditing(false);
+    router.push("/dashboard/invoices");
 
-    console.log(content);
   };
 
   return (
     <>
-      <div className="min-h-screen grid place-items-center bg-gray-900">
-        <form
-          onSubmit={onSubmit}
-          className="w-full max-w-xl bg-gray-800 p-8 rounded-lg shadow-md"
-        >
-          <h1 className="text-4xl font-bold mb-8 text-center text-white">
-            Upload a new Invoice
-          </h1>
-          <div className="mb-6">
-            <input
-              type="file"
-              name="file"
-              onChange={(e) => setFile(e.target.files?.[0])}
-              className="border-2 border-gray-300 border-dashed rounded-md p-4 w-full text-white bg-gray-700"
-              draggable="true"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-              }}
-            />
-          </div>
-          <div className="flex justify-center mb-6">
-            <input
-              type="submit"
-              value="Upload"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            />
-          </div>
-          <div className="bg-gray-700 p-4 rounded-lg">
-            <h2 className="text-xl font-bold text-white mt-4">Content</h2>
+      <div className="flex h-screen ">
+        <SideBar show={showSidebar} setter={setShowSidebar} />
 
-            {isEditing ? (
-              <textarea
-                ref={textareaRef}
-                value={editedContent}
-                onChange={handleEditChange}
-                className="w-full p-3 mt-2 text-gray-200 bg-gray-800 rounded-lg resize-none focus:outline-none"
-                rows={10}
-                style={{ overflow: "hidden", backgroundColor: "inherit" }}
-              ></textarea>
-            ) : (
-              <p className="text-sm text-gray-200 mt-2 whitespace-pre-wrap">
-                {content}
-              </p>
-            )}
-
-            <div className="flex justify-end mt-4">
-              {isEditing ? (
-                <button
-                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
-                  onClick={() => {handleEditSubmit();}}
-                >
-                  Save
-                </button>
-              ) : (
-                <button
-                  className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Edit
-                </button>
-              )}
+        <div className="min-h-screen grid place-items-center bg-gray-900">
+          <form
+            onSubmit={onSubmit}
+            className="w-full max-w-xl bg-gray-800 p-8 rounded-lg shadow-md"
+          >
+            <h1 className="text-4xl font-bold mb-8 text-center text-white">
+              Upload a new Invoice
+            </h1>
+            <div className="mb-6">
+              <input
+                type="file"
+                name="file"
+                onChange={(e) => setFile(e.target.files?.[0])}
+                className="border-2 border-gray-300 border-dashed rounded-md p-4 w-full text-white bg-gray-700"
+                draggable="true"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                }}
+              />
             </div>
-          </div>
-        </form>
+            <div className="flex justify-center mb-6">
+              <input
+                type="submit"
+                value="Upload"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              />
+            </div>
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <h2 className="text-xl font-bold text-white mt-4">Content</h2>
+
+              {isEditing ? (
+                <textarea
+                  ref={textareaRef}
+                  value={editedContent}
+                  onChange={handleEditChange}
+                  className="w-full p-3 mt-2 text-gray-200 bg-gray-800 rounded-lg resize-none focus:outline-none"
+                  rows={10}
+                  style={{ overflow: "hidden", backgroundColor: "inherit" }}
+                ></textarea>
+              ) : (
+                <p className="text-sm text-gray-200 mt-2 whitespace-pre-wrap">
+                  {content}
+                </p>
+              )}
+
+              <div className="flex justify-end mt-4">
+                {isEditing ? (
+                  <button
+                    className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                    onClick={() => {
+                      handleEditSubmit();
+                    }}
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+        <ToastContainer />
       </div>
-      <ToastContainer />
     </>
   );
 }
