@@ -5,11 +5,43 @@ import { useRouter } from "next/navigation"; // Import from next/navigation
 import { useEffect, useState } from "react";
 import SideBar from "@/components/sideBar";
 import {SignOut} from "@/components/SignOut";
+import createAxiosInstance from "@/../lib/axiosInstance";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const [showSidebar, setShowSidebar] = useState(false);
   const router = useRouter();
+  var API = createAxiosInstance(session?.accessToken as string);
+
+  useEffect(() => {
+
+    API.get("/users")
+    .then((res) => {
+      console.log(res.data);
+      var exist= false;
+      res.data.forEach((user: any) => {
+        if (user.email === session?.user?.email) 
+          exist = true;
+      })
+      if(!exist){
+        let data = { name: "", email: "" };
+        if (session?.user) {
+          data.name = session.user.name as string;
+          data.email = session.user.email as string;
+        }
+        API.post("/users", {
+          data,
+        })
+        .then((res) => {
+          if (res.status === 201)
+            console.log("User created successfully");
+        })
+        .catch((e) => {
+          console.error(e);
+        });
+      }
+    })
+  })
 
   useEffect(() => {
     if (status !== "loading" && !session) {

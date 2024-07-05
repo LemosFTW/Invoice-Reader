@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import createAxiosInstance from "@/../lib/axiosInstance";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 
 export default function SignInPage() {
   const { data: session } = useSession();
@@ -34,9 +34,7 @@ export default function SignInPage() {
         .catch((e) => {
           console.error(e);
         });
-
         router.push("/dashboard");
-      
     }
   }, [session, router]);
 
@@ -48,6 +46,7 @@ export default function SignInPage() {
   <div className="flex flex-col items-center mt-10 p-7 shadow-md bg-white rounded-lg">
     <h1 className="mt-10 mb-4 text-4xl font-bold text-gray-900">Sign In</h1>
     <GoogleSignInButton />
+    <ToastContainer />
   </div>
 </div>
   );

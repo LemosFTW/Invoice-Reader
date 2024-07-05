@@ -10,24 +10,25 @@ import createAxiosInstance from "@/../lib/axiosInstance";
 import { SignOut } from "@/components/SignOut";
 
 export default function Upload() {
-  const [file, setFile] = useState<File>();
+  const [file, setFile] = useState<File | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
-
-  const { data: session, status } = useSession();
-
-  var API = createAxiosInstance(session?.accessToken as string);
-
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
-  const readImageContent = async (image: any) => {
-    let data = await Tesseract.recognize(image, "por");
+  const { data: session, status } = useSession();
+  const API = createAxiosInstance(session?.accessToken as string);
+
+  const readImageContent = async (image: File) => {
+    const url = URL.createObjectURL(image);
+    const data = await Tesseract.recognize(url, "por");
     const contentParse = data.lines.map((line: any) => line.text).join("\n");
     setContent(contentParse);
     setEditedContent(contentParse);
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -47,37 +48,28 @@ export default function Upload() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file || !session) return;
 
     try {
       const data = new FormData();
-      data.set("file", file);
-      data.set("userEmail", session?.user?.email as string);
+      data.append("file", file);
+      data.append("userEmail", session.user.email as string);
 
-      await API.post("/upload", data)
-        .then((res) => {
-          let url = URL.createObjectURL(file);
-          if (res.status === 201) readImageContent(url);
-        })
-        .catch((e) => {
-          console.error(e);
-        });
-
-      const updateData = {
-        fileName: file.name,
-        userEmail: session?.user?.email as string,
-        content: editedContent,
-      };
-
-      await API.patch("/upload", updateData)
-        .then((res) => {
-          if (res.status === 200) toast.success("File uploaded successfully");
-        })
-        .catch((e) => {
-          console.error(e);
-        });
-    } catch (e) {
-      console.error(e);
+      const uploadResponse = await API.post("/upload", data, {
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total ?? 0));
+          setUploadProgress(progress);
+        }
+      });
+      if (uploadResponse.status === 201) {
+        await readImageContent(file);
+        toast.success("File uploaded successfully");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload file");
+    } finally {
+      setUploadProgress(0); // Reset progress after upload
     }
   };
 
@@ -90,36 +82,37 @@ export default function Upload() {
   };
 
   const handleEditSubmit = async () => {
+    if (!file || !session) return;
+
     setIsEditing(false);
 
     const updateData = {
-      fileName: file?.name as string,
-      userEmail: session?.user?.email as string,
+      fileName: file.name,
+      userEmail: session.user.email as string,
       content: editedContent,
     };
 
     try {
-      const res = await API.patch("/upload", updateData);
-      if (res.status === 200) toast.success("File updated successfully");
-    } catch (e) {
-      console.error(e);
+      const updateResponse = await API.patch("/upload", updateData);
+      if (updateResponse.status === 200) {
+        toast.success("File updated successfully");
+        setContent(editedContent);
+        router.push("/dashboard/invoices");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update file");
     }
-
-    setContent(editedContent);
-    setIsEditing(false);
-    router.push("/dashboard/invoices");
   };
 
   return (
     <>
       <div className="flex h-screen">
         <SideBar show={showSidebar} setter={setShowSidebar} />
-
         <div className="flex-1 flex flex-col min-h-screen bg-gray-900">
           <div className="flex justify-end p-4">
             <SignOut />
           </div>
-
           <div className="flex-grow grid place-items-center">
             <form
               onSubmit={onSubmit}
@@ -132,12 +125,16 @@ export default function Upload() {
                 <input
                   type="file"
                   name="file"
-                  onChange={(e) => setFile(e.target.files?.[0])}
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
                   className="border-2 border-gray-300 border-dashed rounded-md p-4 w-full text-white bg-gray-700"
                   draggable="true"
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                      setFile(files[0]);
+                    }
                   }}
                 />
               </div>
@@ -148,9 +145,18 @@ export default function Upload() {
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 />
               </div>
+              {uploadProgress > 0 && (
+                <div className="w-full bg-gray-700 rounded-lg mb-4">
+                  <div
+                    className="bg-blue-500 text-xs leading-none py-1 text-center text-white rounded-lg"
+                    style={{ width: `${uploadProgress}%` }}
+                  >
+                    {uploadProgress}%
+                  </div>
+                </div>
+              )}
               <div className="bg-gray-700 p-4 rounded-lg">
                 <h2 className="text-xl font-bold text-white mt-4">Content</h2>
-
                 {isEditing ? (
                   <textarea
                     ref={textareaRef}
@@ -165,23 +171,22 @@ export default function Upload() {
                     {content}
                   </p>
                 )}
-
                 <div className="flex justify-end mt-4">
                   {isEditing ? (
                     <button
+                      type="button"
                       className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
-                      onClick={() => {
-                        handleEditSubmit();
-                      }}
+                      onClick={handleEditSubmit}
                     >
                       Save
                     </button>
                   ) : (
                     <button
+                      type="button"
                       className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
                       onClick={() => setIsEditing(true)}
                     >
-                      Edit
+                      Approve/Edit
                     </button>
                   )}
                 </div>
