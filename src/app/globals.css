@@ -27,6 +27,13 @@ body {
   margin: 0; /* Remove any default margins */
 }
 
+.transition-transform {
+  transition: transform 0.3s ease-in-out;
+}
+.transition-margin {
+  transition: margin-left 0.3s ease-in-out;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

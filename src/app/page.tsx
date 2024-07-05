@@ -13,6 +13,8 @@ export default function SignInPage() {
 
   var API = createAxiosInstance(session?.accessToken as string);
 
+
+  //Logic to create user if is not registered
   useEffect(() => {
     if (session) {
       let data = { name: "", email: "" };

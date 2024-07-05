@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import SideBar from "@/components/sideBar";
 import createAxiosInstance from "@/../lib/axiosInstance";
-import { SignOut } from "@/components/SignOut";
+import { SignOut } from "@/components/signOut";
 import { toast,ToastContainer } from "react-toastify";
 
+//Invoice interface
 interface Invoice {
   id: number;
   filename: string;
@@ -32,6 +33,8 @@ export default function Dashboard() {
     fetchInvoices();
   }, []);
 
+
+  //control the height of the textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -41,6 +44,8 @@ export default function Dashboard() {
     }
   }, [editInvoiceSelectedData?.extractedText]);
 
+
+  //fetch invoices
   const fetchInvoices = async () => {
     let userEmail = session?.user?.email || "";
     try {
@@ -55,6 +60,8 @@ export default function Dashboard() {
     }
   };
 
+
+  //delete invoice
   const deleteInvoice = async (id: number) => {
     let userEmail = session?.user?.email || "";
     try {
@@ -83,6 +90,8 @@ export default function Dashboard() {
     }
   };
 
+
+  
   const handleEditSubmit = async () => {
     const userEmail = session?.user?.email || "";
     if (!editInvoiceSelectedData) return;
@@ -94,7 +103,6 @@ export default function Dashboard() {
     };
 
     try {
-      console.log(`/invoices/${editInvoiceData.id}`);
       const response = await API.put(`/invoices/${editInvoiceData.id}`, {
         content: editInvoiceData.extractedText,
         email: userEmail,
@@ -171,7 +179,9 @@ export default function Dashboard() {
               </div>
             ))
           ) : (
-            <p>No invoices found.</p>
+            <p 
+              className="text-lg font-semibold text-gray-700"
+            >No invoices found.</p>
           )}
         </div>
         <div className="absolute top-4 right-4">

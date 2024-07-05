@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation"; // Import from next/navigation
 import { useEffect, useState } from "react";
 import SideBar from "@/components/sideBar";
-import {SignOut} from "@/components/SignOut";
+import {SignOut} from "@/components/signOut";
 import createAxiosInstance from "@/../lib/axiosInstance";
 
 export default function Dashboard() {
@@ -13,6 +13,10 @@ export default function Dashboard() {
   const router = useRouter();
   var API = createAxiosInstance(session?.accessToken as string);
 
+
+
+
+  //Logic to create user if is not registered
   useEffect(() => {
 
     API.get("/users")

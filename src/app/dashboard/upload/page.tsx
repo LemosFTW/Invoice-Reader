@@ -7,7 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Tesseract from "tesseract.js";
 import SideBar from "@/components/sideBar";
 import createAxiosInstance from "@/../lib/axiosInstance";
-import { SignOut } from "@/components/SignOut";
+import { SignOut } from "@/components/signOut";
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
