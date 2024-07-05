@@ -50,6 +50,11 @@ export default function Upload() {
     e.preventDefault();
     if (!file || !session) return;
 
+    if (!file.name.toLowerCase().endsWith(".png") && !file.name.toLowerCase().endsWith(".jpg")) {
+      toast.error("Invalid file format. Only PNG and JPG files are accepted.");
+      return;
+    }
+
     try {
       const data = new FormData();
       data.append("file", file);
@@ -83,6 +88,8 @@ export default function Upload() {
 
   const handleEditSubmit = async () => {
     if (!file || !session) return;
+
+    
 
     setIsEditing(false);
 
